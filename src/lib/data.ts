@@ -1,4 +1,7 @@
+
 import type { Project, Task } from './types';
+import { collection, getDocs, writeBatch, doc,getCountFromServer } from 'firebase/firestore';
+import { db } from './firebase.config';
 
 export const initialProjects: Project[] = [
   {
@@ -10,7 +13,7 @@ export const initialProjects: Project[] = [
     paidAmount: 100000,
     status: 'In Progress',
     deadline: '2024-08-30',
-    createdAt: '2024-05-01',
+    createdAt: '2024-05-01T10:00:00Z', // Ensure ISO 8601 format
   },
   {
     id: 'proj-2',
@@ -21,7 +24,7 @@ export const initialProjects: Project[] = [
     paidAmount: 50000,
     status: 'Correction',
     deadline: '2024-09-15',
-    createdAt: '2024-06-10',
+    createdAt: '2024-06-10T11:00:00Z',
   },
   {
     id: 'proj-3',
@@ -31,7 +34,7 @@ export const initialProjects: Project[] = [
     totalAmount: 200000,
     paidAmount: 200000,
     status: 'Completed',
-    createdAt: '2024-04-15',
+    createdAt: '2024-04-15T12:00:00Z',
   },
   {
     id: 'proj-4',
@@ -42,7 +45,7 @@ export const initialProjects: Project[] = [
     paidAmount: 10000,
     status: 'Pending',
     deadline: '2024-10-01',
-    createdAt: '2024-07-01',
+    createdAt: '2024-07-01T13:00:00Z',
   },
 ];
 
@@ -55,7 +58,7 @@ export const initialTasks: Task[] = [
     status: 'In Progress',
     isCorrection: false,
     dueDate: '2024-07-30',
-    createdAt: '2024-07-15',
+    createdAt: '2024-07-15T14:00:00Z',
   },
   {
     id: 'task-2',
@@ -65,7 +68,7 @@ export const initialTasks: Task[] = [
     status: 'To Do',
     isCorrection: true,
     dueDate: '2024-08-05',
-    createdAt: '2024-07-20',
+    createdAt: '2024-07-20T15:00:00Z',
   },
   {
     id: 'task-3',
@@ -74,7 +77,7 @@ export const initialTasks: Task[] = [
     projectName: 'E-commerce Trends in Northern Nigeria',
     status: 'To Do',
     isCorrection: false,
-    createdAt: '2024-07-22',
+    createdAt: '2024-07-22T16:00:00Z',
   },
   {
     id: 'task-4',
@@ -83,6 +86,52 @@ export const initialTasks: Task[] = [
     projectName: 'Fintech Solutions for Financial Inclusion',
     status: 'Done',
     isCorrection: false,
-    createdAt: '2024-06-01',
+    createdAt: '2024-06-01T17:00:00Z',
   },
 ];
+
+// This function can be called manually or through a UI element if needed.
+export async function seedInitialData() {
+  if (!db) {
+    console.error("Firestore (db) is not initialized. Cannot seed data.");
+    return;
+  }
+
+  try {
+    const projectsCol = collection(db, 'projects');
+    const tasksCol = collection(db, 'tasks');
+
+    const projectsSnapshot = await getCountFromServer(projectsCol);
+    const tasksSnapshot = await getCountFromServer(tasksCol);
+
+    const batch = writeBatch(db);
+    let operationsCount = 0;
+
+    if (projectsSnapshot.data().count === 0) {
+      console.log('Seeding initial projects...');
+      initialProjects.forEach(project => {
+        const projectRef = doc(db, 'projects', project.id);
+        batch.set(projectRef, project);
+        operationsCount++;
+      });
+    }
+
+    if (tasksSnapshot.data().count === 0) {
+      console.log('Seeding initial tasks...');
+      initialTasks.forEach(task => {
+        const taskRef = doc(db, 'tasks', task.id);
+        batch.set(taskRef, task);
+        operationsCount++;
+      });
+    }
+
+    if (operationsCount > 0) {
+      await batch.commit();
+      console.log('Initial data seeded successfully.');
+    } else {
+      console.log('Database already contains data or no initial data to seed. No seeding performed.');
+    }
+  } catch (error) {
+    console.error("Error seeding data: ", error);
+  }
+}
