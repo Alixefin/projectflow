@@ -10,9 +10,10 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-} from '@/components/ui/sidebar'; // Assuming sidebar is in ui
+} from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const navItems = [
   { href: '/', label: 'Homepage', icon: Home },
@@ -57,7 +58,8 @@ export function DesktopSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <Separator />
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-4 space-y-1">
+        <ThemeToggle />
         <Button variant="ghost" className="w-full justify-start">
           <Settings className="mr-2 h-5 w-5" />
           Settings
