@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import type { Project, Task } from '@/lib/types';
 import { DateTimeWidget } from '@/components/DateTimeWidget';
 import { FinanceOverview } from '@/components/dashboard/FinanceOverview';
+import { ProjectStatsSummary } from '@/components/dashboard/ProjectStatsSummary';
 import { UpcomingTasks } from '@/components/dashboard/UpcomingTasks';
 import { ProjectsNeedingCorrection } from '@/components/dashboard/ProjectsNeedingCorrection';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -37,8 +38,7 @@ export default function HomePage() {
         setProjects(projectsList);
 
         const tasksCollection = collection(db, 'tasks');
-        // Fetching tasks relevant for the dashboard (e.g., pending, recently created)
-        const qTasks = query(tasksCollection, orderBy('createdAt', 'desc'), limit(20)); // Example: limit to 20 recent tasks for dashboard
+        const qTasks = query(tasksCollection, orderBy('createdAt', 'desc'), limit(20));
         const tasksSnapshot = await getDocs(qTasks);
         const tasksList = tasksSnapshot.docs.map(docSnapshot => ({
           id: docSnapshot.id,
@@ -60,6 +60,7 @@ export default function HomePage() {
       <div className="space-y-6">
         <Skeleton className="h-24 w-full" />
         <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-40 w-full" />
         <Skeleton className="h-60 w-full" />
         <Skeleton className="h-40 w-full" />
       </div>
@@ -69,7 +70,10 @@ export default function HomePage() {
   return (
     <div className="space-y-6">
       <DateTimeWidget />
-      <FinanceOverview projects={projects} />
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <FinanceOverview projects={projects} />
+        <ProjectStatsSummary projects={projects} />
+      </div>
       <div className="grid gap-6 md:grid-cols-2">
         <UpcomingTasks tasks={tasks} />
         <ProjectsNeedingCorrection projects={projects} />

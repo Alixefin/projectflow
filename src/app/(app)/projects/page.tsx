@@ -13,12 +13,36 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Users, AlertCircle, CheckCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 import { db } from '@/lib/firebase.config';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+
+interface StatBoxProps {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  bgColor?: string;
+  textColor?: string;
+}
+
+function ProjectStatBox({ title, value, icon, bgColor = "bg-muted/30", textColor = "text-foreground" }: StatBoxProps) {
+  return (
+    <Card className={`shadow-sm ${bgColor} flex-1`}>
+      <CardContent className="p-4">
+        <div className="flex items-center mb-1">
+          {icon}
+          <h3 className="text-xs sm:text-sm font-medium text-muted-foreground ml-2">{title}</h3>
+        </div>
+        <p className={`text-xl sm:text-2xl font-semibold ${textColor}`}>{value}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 export default function ProjectManagementPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -59,7 +83,6 @@ export default function ProjectManagementPage() {
       toast({ title: "Error", description: "Database not initialized. Cannot add project.", variant: "destructive" });
       return;
     }
-    // Consider a specific form submission loading state
     setLoading(true); 
     try {
       const newProjectData = {
@@ -85,7 +108,6 @@ export default function ProjectManagementPage() {
     setLoading(true);
     try {
       const projectRef = doc(db, 'projects', editingProject.id);
-      // Ensure not to pass id or createdAt in the data to be updated.
       const { id, createdAt, ...updateData } = { ...editingProject, ...data };
       await updateDoc(projectRef, updateData);
       
@@ -137,7 +159,11 @@ export default function ProjectManagementPage() {
     project.projectTopic.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading && projects.length === 0) { // Show skeleton only on initial load
+  const totalProjects = projects.length;
+  const correctionProjectsCount = projects.filter(p => p.status === 'Correction').length;
+  const completedProjectsCount = projects.filter(p => p.status === 'Completed').length;
+
+  if (loading && projects.length === 0) { 
     return (
       <div className="space-y-4">
         <div className="flex justify-between items-center">
@@ -145,6 +171,11 @@ export default function ProjectManagementPage() {
           <Skeleton className="h-10 w-32" />
         </div>
         <Skeleton className="h-10 w-full md:w-1/2" />
+        <div className="flex gap-4 mb-4">
+          <Skeleton className="h-24 flex-1" />
+          <Skeleton className="h-24 flex-1" />
+          <Skeleton className="h-24 flex-1" />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-64 w-full" />)}
         </div>
@@ -183,6 +214,30 @@ export default function ProjectManagementPage() {
         className="max-w-sm"
       />
 
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <ProjectStatBox 
+          title="Total Projects" 
+          value={totalProjects} 
+          icon={<Users className="h-5 w-5 text-blue-500" />}
+          bgColor="bg-blue-500/5"
+          textColor="text-blue-600"
+        />
+        <ProjectStatBox 
+          title="Needs Correction" 
+          value={correctionProjectsCount} 
+          icon={<AlertCircle className="h-5 w-5 text-red-500" />}
+          bgColor="bg-red-500/5"
+          textColor="text-red-600"
+        />
+        <ProjectStatBox 
+          title="Completed" 
+          value={completedProjectsCount} 
+          icon={<CheckCircle className="h-5 w-5 text-green-500" />}
+          bgColor="bg-green-500/5"
+          textColor="text-green-600"
+        />
+      </div>
+
       {filteredProjects.length === 0 && !loading ? (
          <p className="text-muted-foreground text-center py-8">
           {searchTerm ? 'No projects match your search.' : 'No projects yet. Click "Add New Project" to get started!'}
@@ -202,3 +257,4 @@ export default function ProjectManagementPage() {
     </div>
   );
 }
+
